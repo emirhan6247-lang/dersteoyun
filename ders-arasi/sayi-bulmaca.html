@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sayı Bulmaca | Ders Arası</title>
+    <style>
+        :root {
+            --bg-color: #121212;
+            --text-color: #e0e0e0;
+            --card-bg: #1e1e1e;
+            --accent-color: #bb86fc;
+            --danger-color: #cf6679;
+            --success-color: #03dac6;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            margin: 0;
+            padding: 2rem;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.5);
+            max-width: 500px;
+            width: 100%;
+        }
+
+        .header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid #333;
+            padding-bottom: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .back-btn {
+            color: var(--accent-color);
+            text-decoration: none;
+            font-size: 0.9rem;
+        }
+
+        .score-board {
+            font-size: 1.2rem;
+            font-weight: bold;
+            color: var(--success-color);
+        }
+
+        .rules {
+            background-color: #2a2a2a;
+            padding: 1rem;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            margin-bottom: 1.5rem;
+            border-left: 3px solid var(--accent-color);
+        }
+
+        .rules ul { margin: 0; padding-left: 1.2rem; }
+        .rules li { margin-bottom: 0.3rem; }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 1.5rem;
+        }
+
+        input {
+            flex: 1;
+            padding: 10px;
+            font-size: 1.2rem;
+            border: 1px solid #444;
+            border-radius: 6px;
+            background-color: #121212;
+            color: white;
+            text-align: center;
+            letter-spacing: 5px;
+        }
+
+        button {
+            padding: 10px 20px;
+            font-size: 1rem;
+            background-color: var(--accent-color);
+            color: #000;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: bold;
+            transition: 0.2s;
+        }
+
+        button:hover { background-color: #9d4edd; }
+
+        .log-area {
+            max-height: 250px;
+            overflow-y: auto;
+            border: 1px solid #333;
+            border-radius: 6px;
+            padding: 10px;
+        }
+
+        .log-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 8px;
+            border-bottom: 1px solid #222;
+        }
+
+        .log-item:last-child { border-bottom: none; }
+        .clue-plus { color: var(--success-color); font-weight: bold; }
+        .clue-minus { color: var(--danger-color); font-weight: bold; }
+        .error-msg { color: var(--danger-color); font-size: 0.9rem; margin-top: -10px; margin-bottom: 10px; display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <a href="index.html" class="back-btn">← Ana Menü</a>
+            <h2>Sayı Bulmaca</h2>
+            <div class="score-board">Puan: <span id="score">100</span></div>
+        </div>
+
+        <div class="rules">
+            <strong>Nasıl Oynanır?</strong>
+            <ul>
+                <li>Oyun 3 basamaklı, rakamları farklı ve 0 içermeyen bir sayı tutar.</li>
+                <li><strong>İlk İpucu:</strong> Hedef sayıda olan toplam doğru rakam sayısını verir (Örn: +2).</li>
+                <li><strong>İkinci İpucu:</strong> Eğer bilinen rakamların hiçbiri doğru yerde değilse eksi olarak gösterilir (Örn: -2). Doğru yerde olanlar varsa sadece onlar artı olarak gösterilir (Örn: +1).</li>
+                <li>Her yanlış tahminde 10 puan kaybedersin!</li>
+            </ul>
+        </div>
+
+        <div class="error-msg" id="errorMsg"></div>
+
+        <div class="input-group">
+            <input type="text" id="guessInput" maxlength="3" placeholder="321" autocomplete="off" autofocus>
+            <button onclick="makeGuess()" id="guessBtn">Tahmin Et</button>
+        </div>
+
+        <div class="log-area" id="logArea">
+            <!-- Tahminler buraya gelecek -->
+        </div>
+    </div>
+
+    <script>
+        let targetNumber = "";
+        let score = 100;
+        let isGameOver = false;
+
+        function generateTarget() {
+            let digits = ['1', '2', '3', '4', '5', '6', '7', '8', '9'];
+            let result = "";
+            for (let i = 0; i < 3; i++) {
+                let randomIndex = Math.floor(Math.random() * digits.length);
+                result += digits[randomIndex];
+                digits.splice(randomIndex, 1);
+            }
+            return result;
+        }
+
+        function initGame() {
+            targetNumber = generateTarget();
+            score = 100;
+            document.getElementById('score').innerText = score;
+            console.log("Gizli Sayı:", targetNumber); // Test için
+        }
+
+        function showError(msg) {
+            const errorDiv = document.getElementById('errorMsg');
+            errorDiv.innerText = msg;
+            errorDiv.style.display = 'block';
+            setTimeout(() => errorDiv.style.display = 'none', 3000);
+        }
+
+        function makeGuess() {
+            if (isGameOver) return;
+
+            const inputField = document.getElementById('guessInput');
+            const guess = inputField.value;
+
+            // Validasyonlar
+            if (guess.length !== 3 || isNaN(guess)) {
+                showError("Lütfen 3 basamaklı bir sayı gir!");
+                return;
+            }
+            if (guess.includes('0')) {
+                showError("Sayı 0 içeremez!");
+                return;
+            }
+            if (new Set(guess).size !== 3) {
+                showError("Rakamlar birbirinden farklı olmalı!");
+                return;
+            }
+
+            // İpucu Hesaplama (Senin özel kurallarına göre)
+            let totalMatches = 0;
+            let exactMatches = 0;
+
+            for (let i = 0; i < 3; i++) {
+                if (targetNumber.includes(guess[i])) {
+                    totalMatches++;
+                    if (targetNumber[i] === guess[i]) {
+                        exactMatches++;
+                    }
+                }
+            }
+
+            // Log formatı hazırlama
+            const logArea = document.getElementById('logArea');
+            const logItem = document.createElement('div');
+            logItem.className = 'log-item';
+            
+            let clueHtml = "";
+            
+            if (totalMatches > 0) {
+                // İlk kısım: Toplam kaç tane doğru rakam var
+                clueHtml += `<span class="clue-plus">+${totalMatches}</span> `;
+                
+                // İkinci kısım: Yerindelik durumu
+                if (exactMatches > 0) {
+                    clueHtml += `<span class="clue-plus">+${exactMatches}</span>`;
+                } else {
+                    clueHtml += `<span class="clue-minus">-${totalMatches}</span>`;
+                }
+            } else {
+                clueHtml = "Yok";
+            }
+
+            logItem.innerHTML = `<span>Tahmin: <strong>${guess}</strong></span> <span>${clueHtml}</span>`;
+            logArea.prepend(logItem);
+
+            // Kazanma ve Puan Durumu
+            if (exactMatches === 3) {
+                logItem.innerHTML = `<span>Tahmin: <strong>${guess}</strong></span> <span class="clue-plus">Tebrikler! Bildin!</span>`;
+                isGameOver = true;
+                inputField.disabled = true;
+                document.getElementById('guessBtn').innerText = "Tekrar Oyna";
+                document.getElementById('guessBtn').onclick = () => location.reload();
+            } else {
+                score -= 10;
+                if (score < 0) score = 0;
+                document.getElementById('score').innerText = score;
+
+                if (score === 0) {
+                    showError(`Oyun Bitti! Sayı: ${targetNumber}`);
+                    isGameOver = true;
+                    inputField.disabled = true;
+                    document.getElementById('guessBtn').innerText = "Tekrar Oyna";
+                    document.getElementById('guessBtn').onclick = () => location.reload();
+                }
+            }
+
+            inputField.value = "";
+            inputField.focus();
+        }
+
+        document.getElementById('guessInput').addEventListener('keypress', function (e) {
+            if (e.key === 'Enter') makeGuess();
+        });
+
+        initGame();
+    </script>
+</body>
+</html>
