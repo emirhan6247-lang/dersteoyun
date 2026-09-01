@@ -14,6 +14,11 @@
             --success-color: #03dac6;
         }
 
+        /* Tüm elementlerin padding'i genişliğe dahil etmesi için */
+        * {
+            box-sizing: border-box;
+        }
+
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             background-color: var(--bg-color);
@@ -41,6 +46,10 @@
             border-bottom: 1px solid #333;
             padding-bottom: 1rem;
             margin-bottom: 1rem;
+        }
+
+        .header h2 {
+            margin: 0;
         }
 
         .back-btn {
@@ -98,6 +107,7 @@
         }
 
         button:hover { background-color: #9d4edd; }
+        button:disabled { background-color: #555; cursor: not-allowed; color: #888; }
 
         .log-area {
             max-height: 250px;
@@ -118,6 +128,45 @@
         .clue-plus { color: var(--success-color); font-weight: bold; }
         .clue-minus { color: var(--danger-color); font-weight: bold; }
         .error-msg { color: var(--danger-color); font-size: 0.9rem; margin-top: -10px; margin-bottom: 10px; display: none; }
+
+        /* MOBİL UYUM (Medya Sorguları) */
+        @media (max-width: 480px) {
+            body {
+                padding: 1rem 0.5rem;
+            }
+            
+            .container {
+                padding: 1.5rem 1rem;
+            }
+            
+            .header h2 {
+                font-size: 1.3rem;
+            }
+            
+            .score-board {
+                font-size: 1rem;
+            }
+            
+            .rules {
+                font-size: 0.75rem;
+                padding: 0.8rem;
+            }
+            
+            .input-group {
+                flex-direction: column; /* Input ve butonu alt alta dizer */
+                gap: 12px;
+            }
+            
+            input {
+                width: 100%;
+                padding: 12px;
+            }
+            
+            button {
+                width: 100%;
+                padding: 12px;
+            }
+        }
     </style>
 </head>
 <body>
